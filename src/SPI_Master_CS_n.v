@@ -1,17 +1,13 @@
 // SPI Master block with CS_n
-//
-/////////////////////////////////////////////////
-//	SPI_MODE |		CPOL	|	CPHA 
-//		0		|		0		|		0	
-//		1		|		0		|		1
-//		2		|		1		|		0
-//		3		|		1		|		1
-/////////////////////////////////////////////////
+// Parameters: 	SPI_MODE is described in "SPI_Master.v" 
+// 				CLKS_PER_HALF_BIT - number of clk on half generated bit
+//				CS_INACTIVE_CLKS - min delay in clk between two data frames
+//				MAX_BYTES_PER_CS - max bytes in one frame (when CS_n is low)
 module SPI_Master_CS
 
 	#( // Parameters
-	parameter SPI_MODE 				= 0,
-	parameter CLKS_PER_HALF_BIT 	= 2,
+	parameter SPI_MODE 			= 0,
+	parameter CLKS_PER_HALF_BIT = 2,
 	parameter CS_INACTIVE_CLKS 	= 1,
 	parameter MAX_BYTES_PER_CS 	= 3)
 
@@ -21,34 +17,34 @@ module SPI_Master_CS
 	
 	// SPI MOSI Signals
 	input [$clog2(MAX_BYTES_PER_CS+1)-1:0] i_TX_Count,
-	input [7:0] 	i_TX_Byte,			// Byte to transmit
-	input 			i_TX_En,				// Pulse for transmit 
-	output 	 		o_TX_Ready,			// Ready to transmit next byte
+	input [7:0] 	i_TX_Byte,								// Byte to transmit
+	input 			i_TX_En,								// Pulse for transmit 
+	output 	 		o_TX_Ready,								// Ready to transmit next byte
 	
 	
 	// SPI MISO Signals	
 	output reg [$clog2(MAX_BYTES_PER_CS+1)-1:0] o_RX_Count,
-	output [7:0] 	o_RX_Byte,	// Received byte from i_MISO
-	output 			o_RX_En,		// Pulse then byte completed
+	output [7:0] 	o_RX_Byte,								// Received byte from i_MISO
+	output 			o_RX_En,								// Pulse then byte completed
 
 
 	// SPI Interface
-	output	o_MOSI,				// MOSI output
-	output	o_SPCK,				// SPI Clock  
-	input 	i_MISO,
-	output 	o_CS_n	
+	output	o_MOSI,		// MOSI output
+	output	o_SPCK,		// SPI Clock  
+	input 	i_MISO,		// MISO input  
+	output 	o_CS_n		// CS ouput (active low)	
 	);
 	
 	// FSM States
-	localparam IDLE 			= 2'b00;
+	localparam IDLE 		= 2'b00;
 	localparam TRANSFER		= 2'b01;
 	localparam CS_INACTIVE 	= 2'b10; 
 
 	reg [$clog2(MAX_BYTES_PER_CS+1)-1:0] r_TX_Count;
 	reg [$clog2(CS_INACTIVE_CLKS+1)-1:0] r_CS_Inactive_Count;
-	reg [1:0] r_FSM_CS;
-	reg r_CS_n;
-	wire w_Master_TX_Ready;
+	reg [1:0] 	r_FSM_CS;
+	reg 		r_CS_n;
+	wire 		w_Master_TX_Ready;
 
 	// Instantiate SPI_Master_Base
 	SPI_Master_Base
@@ -96,7 +92,7 @@ module SPI_Master_CS
 					begin
 						r_CS_n 		<= 1'b0;
 						r_TX_Count	<= i_TX_Count - 1'b1;
-						r_FSM_CS		<= TRANSFER;
+						r_FSM_CS	<= TRANSFER;
 					end
 				end	
 				
@@ -113,9 +109,9 @@ module SPI_Master_CS
 						end
 						else
 						begin
-							r_CS_n  					<= 1'b1;
-              			r_CS_Inactive_Count 	<= CS_INACTIVE_CLKS;
-              			r_FSM_CS             <= CS_INACTIVE;
+							r_CS_n  			<= 1'b1;
+              				r_CS_Inactive_Count <= CS_INACTIVE_CLKS;
+              				r_FSM_CS            <= CS_INACTIVE;
 						end
 					end	
 				end
@@ -134,7 +130,7 @@ module SPI_Master_CS
 				
 				default:
 				begin
-					r_FSM_CS 	<= IDLE;
+					r_FSM_CS	<= IDLE;
 					r_CS_n 		<= 1'b1;
 				end	
 			endcase
