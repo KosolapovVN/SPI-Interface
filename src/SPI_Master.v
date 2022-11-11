@@ -1,7 +1,7 @@
 // SPI Master base block (without CS_n)
 //
 /////////////////////////////////////////////////
-//	SPI_MODE |		CPOL	|	CPHA 
+//	SPI_MODE	|		CPOL	|		CPHA 
 //		0		|		0		|		0	
 //		1		|		0		|		1
 //		2		|		1		|		0
@@ -21,12 +21,12 @@ module SPI_Master_Base
 	
 	// SPI MOSI Signals
 	input [7:0] i_TX_Byte,			// Byte to transmit
-	input i_TX_En,						// Pulse for transmit 
-	output reg o_TX_Ready,			// Ready to transmit next byte
+	input 		i_TX_En,			// Pulse for transmit 
+	output reg	o_TX_Ready,			// Ready to transmit next byte
 	
 	// SPI MISO Signals	
-	output reg [7:0] o_RX_Byte,	// Received byte from i_MISO
-	output reg o_RX_En,				// Pulse then byte completed
+	output reg [7:0] 	o_RX_Byte,		// Received byte from i_MISO
+	output reg 			o_RX_En,		// Pulse then byte completed
 
 
 	// SPI Interface
@@ -40,13 +40,14 @@ module SPI_Master_Base
 	
 	reg [$clog2(CLKS_PER_HALF_BIT*2)-1:0] r_SPCK_Count;
 	reg [4:0] r_SPCK_Edges;				
-	reg r_Leading_Edge;
-   reg r_Trailing_Edge;
-   reg r_SPCK;
-	reg [7:0] r_TX_Byte;
-	reg r_TX_En;
 	reg [2:0] r_TX_Bit_Count;
 	reg [2:0] r_RX_Bit_Count;
+	reg [7:0] r_TX_Byte;
+	reg	r_Leading_Edge;
+	reg r_Trailing_Edge;
+	reg r_SPCK;
+	reg r_TX_En;
+	
     
 	assign w_CPOL = (SPI_MODE == 2)|(SPI_MODE == 3);
 	assign w_CPHA = (SPI_MODE == 1)|(SPI_MODE == 3);
@@ -54,13 +55,14 @@ module SPI_Master_Base
 	// Generation of SPCK
 	always @(posedge clk or negedge rst_n)
 	begin
-		if (!rst_n) begin
-			o_TX_Ready 			<= 1'b0;
-			r_SPCK_Edges 		<= 0;
-			r_Leading_Edge  	<= 1'b0;
-     		r_Trailing_Edge 	<= 1'b0;
-      	r_SPCK	        	<= w_CPOL;
-      	r_SPCK_Count 		<= 0;
+		if (!rst_n) 
+		begin
+			o_TX_Ready 		<= 1'b0;
+			r_SPCK_Edges 	<= 0;
+			r_Leading_Edge  <= 1'b0;
+     		r_Trailing_Edge <= 1'b0;
+      		r_SPCK	       	<= w_CPOL;
+      		r_SPCK_Count 	<= 0;
 		end
 		else 
 		begin
@@ -70,7 +72,7 @@ module SPI_Master_Base
 			if (i_TX_En)
 			begin	
 				o_TX_Ready 		<= 1'b0;
-				r_SPCK_Edges		<= 16;			
+				r_SPCK_Edges	<= 16;			
 			end
 			else if (r_SPCK_Edges > 0)
 			begin
@@ -86,7 +88,7 @@ module SPI_Master_Base
 				else if (r_SPCK_Count == 2*CLKS_PER_HALF_BIT - 1)	// Full bit
 				begin
 					r_SPCK_Edges 		<= r_SPCK_Edges - 1'b1;
-					r_Trailing_Edge	<= 1'b1;							
+					r_Trailing_Edge		<= 1'b1;							
 					r_SPCK_Count 		<= 0;
 					r_SPCK 				<= ~r_SPCK;	
 				end
@@ -94,26 +96,25 @@ module SPI_Master_Base
 				begin
 					r_SPCK_Count 		<= r_SPCK_Count + 1'b1;	
 				end
-			end					// r_SPCK_Edges > 0 
+			end					
 			else 
 			begin
 				o_TX_Ready			<= 1'b1;
 			end
-		end	// end !(!rst_n)
-
-	end		// end always
+		end	
+	end		
 
 	// Fix input i_TX_Byte then i_TX_En is coming
 	always @(posedge clk or negedge rst_n)	
 	begin
 		if (!rst_n)
 		begin	
-			r_TX_Byte	 	<= 8'h00;
-			r_TX_En			<= 1'b0;				 		 		
+			r_TX_Byte	<= 8'h00;
+			r_TX_En		<= 1'b0;				 		 		
 		end
 		else
 		begin
-			r_TX_En <= i_TX_En;		// delay
+			r_TX_En <= i_TX_En;
 			if (i_TX_En)
 			begin
 				r_TX_Byte <= i_TX_Byte;
@@ -127,7 +128,7 @@ module SPI_Master_Base
 		if (!rst_n)
 		begin
 			r_TX_Bit_Count 	<= 3'b111;		// MSB first
-			o_MOSI 				<= 1'b0;
+			o_MOSI 			<= 1'b0;
 		end	
 		else
 		begin
@@ -137,13 +138,13 @@ module SPI_Master_Base
 			end
 			else if (r_TX_En & ~ w_CPHA)		// first bit then CPHA = 0  
 			begin
-				o_MOSI 					<= r_TX_Byte[3'b111];
-				r_TX_Bit_Count 		<= 3'b110;
+				o_MOSI 			<= r_TX_Byte[3'b111];
+				r_TX_Bit_Count 	<= 3'b110;
 			end
 			else if ((r_Leading_Edge & w_CPHA) | (r_Trailing_Edge & ~ w_CPHA)) 
 			begin
-				o_MOSI 					<= r_TX_Byte[r_TX_Bit_Count];
-				r_TX_Bit_Count 		<= r_TX_Bit_Count - 1'b1;	
+				o_MOSI 			<= r_TX_Byte[r_TX_Bit_Count];
+				r_TX_Bit_Count 	<= r_TX_Bit_Count - 1'b1;	
 			end
 		end
 	end
@@ -153,9 +154,9 @@ module SPI_Master_Base
 	begin
 		if (!rst_n)
 		begin
-			o_RX_Byte			<= 8'h00;
+			o_RX_Byte		<= 8'h00;
 			r_RX_Bit_Count 	<= 3'b111;
-			o_RX_En				<= 1'b0;
+			o_RX_En			<= 1'b0;
 		end
 		else
 		begin
@@ -167,8 +168,8 @@ module SPI_Master_Base
 			end
 			else if ((r_Leading_Edge & ~ w_CPHA) | (r_Trailing_Edge & w_CPHA))
 			begin
-				o_RX_Byte[r_RX_Bit_Count] <= i_MISO;
-				r_RX_Bit_Count <= r_RX_Bit_Count - 1'b1;
+				o_RX_Byte[r_RX_Bit_Count] 	<= i_MISO;
+				r_RX_Bit_Count 				<= r_RX_Bit_Count - 1'b1;
 				if (r_RX_Bit_Count == 0)
 				begin
 					o_RX_En <= 1'b1;
