@@ -1,2 +1,2 @@
 # SPI-Interface
-Verilog files of SPI Master and SPI Slave 
+SPI Master and SPI Slave modules 
