@@ -63,7 +63,7 @@ module SPI_Slave
       		r1_RX_Ready		<= 1'b0;
       		r2_RX_Ready 	<= 1'b0;
       		o_RX_Ready 		<= 1'b0;
-      		o_RX_Byte  		<= 8'h00;
+      		o_RX_Byte		<= 8'h00;
     	end
     	else
     	begin
